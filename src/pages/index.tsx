@@ -1,6 +1,5 @@
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
-import * as XLSX from 'xlsx-js-style';
 import { read, utils, writeFile } from 'xlsx-js-style';
 
 interface Participant {
@@ -37,17 +36,17 @@ export default function Home() {
     `${thisDate.getFullYear()}-${String(thisDate.getMonth() + 1).padStart(2, '0')}-${String(thisDate.getDate()).padStart(2, '0')}`
   );
 
-  const normalizeDate = (data: any[][]): string[][] => {
-    return data.map((row, index) => {
-      if (index > 1 && typeof row[0] === "number") {
-        const utcDays = Math.floor(row[0] - 25569);
-        const utcValue = utcDays * 86400;
-        const dateInfo = new Date(utcValue * 1000);
-        const normalizedRow = [...row];
-        normalizedRow[0] = `${dateInfo.getDate()}/${dateInfo.getMonth() + 1}/${dateInfo.getFullYear()}`;
-        return normalizedRow;
-      }
-      return [...row];
+  const normalizeDate = (data: (string | number)[][]): string[][] => {
+    return data.map((row) => {
+      return row.map((cell, colIndex) => {
+        if (colIndex === 0 && typeof cell === "number") {
+          const utcDays = Math.floor(cell - 25569);
+          const utcValue = utcDays * 86400;
+          const dateInfo = new Date(utcValue * 1000);
+          return `${dateInfo.getDate()}/${dateInfo.getMonth() + 1}/${dateInfo.getFullYear()}`;
+        }
+        return String(cell);
+      });
     });
   };
 
@@ -131,7 +130,7 @@ export default function Home() {
   const chooseParticipant = () => {
     const availableRole = [...roles];
     const availableParticipant = [...participants];
-    let meetUp = [...nextMeetUp];
+    const meetUp = [...nextMeetUp];
     const chosenParticipants: ChosenParticipant[] = [];
 
     while (availableRole.length > 0 && availableParticipant.length > 0) {
